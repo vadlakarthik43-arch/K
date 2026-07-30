@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Birthday Surprise!</title>
+  <style>
+    :root {
+      --primary: #ff4081;
+      --secondary: #7c4dff;
+      --bg-dark: #0b1120;
+      --text-light: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0b1120 0%, #1e1b4b 100%);
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* Floating Canvas for Fireworks / Confetti */
+    canvas#effectCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Background Decorations: Balloons & Stars */
+    .bg-decorations {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle var(--duration) infinite ease-in-out;
+      opacity: 0.8;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .balloon {
+      position: absolute;
+      bottom: -100px;
+      width: 35px;
+      height: 45px;
+      background: var(--color);
+      border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+      animation: floatUp var(--speed) infinite linear;
+      opacity: 0.7;
+    }
+
+    .balloon::before {
+      content: "";
+      position: absolute;
+      bottom: -12px;
+      left: 16px;
+      width: 2px;
+      height: 15px;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+      100% { transform: translateY(-110vh) rotate(20deg); opacity: 0; }
+    }
+
+    /* Main Container */
+    .container {
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      padding: 35px 25px;
+      max-width: 550px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      position: relative;
+      z-index: 2;
+    }
+
+    .icon-gift {
+      font-size: 70px;
+      margin-bottom: 15px;
+      display: inline-block;
+      cursor: pointer;
+      animation: pulse 1.8s infinite ease-in-out;
+      transition: transform 0.2s;
+    }
+
+    .icon-gift:hover {
+      transform: scale(1.15);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+      background: linear-gradient(45deg, #ff80ab, #b388ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+
+    /* Name Input Controls */
+    .input-box {
+      width: 80%;
+      padding: 12px 18px;
+      font-size: 1rem;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      outline: none;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .input-box::placeholder {
+      color: #94a3b8;
+    }
+
+    /* Buttons */
+    .btn {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(255, 64, 129, 0.4);
+      transition: all 0.3s ease;
+      outline: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 15px 30px rgba(255, 64, 129, 0.6);
+    }
+
+    /* Steps visibility */
+    .step {
+      display: none;
+      animation: fadeIn 0.8s ease forwards;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    /* Wish Box */
+    .wish-text {
+      line-height: 1.8;
+      color: #e2e8f0;
+      font-size: 1rem;
+      text-align: left;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 20px;
+      border-radius: 16px;
+      border-left: 4px solid var(--primary);
+      margin: 15px 0;
+    }
+
+    /* Animated CSS Cake */
+    .cake-container {
+      margin: 20px auto;
+      width: 120px;
+      height: 100px;
+      position: relative;
+    }
+
+    .cake-base {
+      width: 120px;
+      height: 45px;
+      background: #ff4081;
+      border-radius: 10px 10px 5px 5px;
+      position: absolute;
+      bottom: 0;
+      box-shadow: inset 0 -8px 0 rgba(0,0,0,0.15);
+    }
+
+    .cake-top {
+      width: 100px;
+      height: 35px;
+      background: #b388ff;
+      border-radius: 10px 10px 0 0;
+      position: absolute;
+      bottom: 45px;
+      left: 10px;
+    }
+
+    .candle {
+      width: 8px;
+      height: 22px;
+      background: #fff;
+      position: absolute;
+      bottom: 80px;
+      left: 56px;
+      border-radius: 3px;
+    }
+
+    .flame {
+      width: 12px;
+      height: 16px;
+      background: #ffea00;
+      border-radius: 50% 50% 20% 20%;
+      position: absolute;
+      bottom: 102px;
+      left: 54px;
+      box-shadow: 0 0 10px #ffea00;
+      animation: flicker 0.6s infinite alternate ease-in-out;
+    }
+
+    @keyframes flicker {
+      0% { transform: scale(1) rotate(-2deg); }
+      100% { transform: scale(1.2) rotate(2deg); }
+    }
+
+    /* Heart / Love Symbol */
+    .heart-symbol {
+      font-size: 65px;
+      color: #ff4081;
+      cursor: pointer;
+      display: inline-block;
+      margin: 15px 0 10px 0;
+      animation: heartBeat 1.3s infinite ease-in-out;
+      transition: transform 0.2s;
+    }
+
+    .heart-symbol:hover {
+      transform: scale(1.25);
+    }
+
+    .heart-title {
+      font-size: 0.95rem;
+      color: #ff80ab;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Rose Icon */
+    .rose-icon {
+      font-size: 80px;
+      margin: 15px 0;
+      display: inline-block;
+      animation: floatRose 3s infinite ease-in-out;
+    }
+
+    /* Keyframe Animations */
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1) rotate(3deg); }
+    }
+
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      25% { transform: scale(1.15); }
+      40% { transform: scale(1); }
+      60% { transform: scale(1.15); }
+    }
+
+    @keyframes floatRose {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Stars & Balloons -->
+  <div class="bg-decorations" id="bgDecorations"></div>
+
+  <!-- Effect Canvas (Fireworks / Confetti) -->
+  <canvas id="effectCanvas"></canvas>
+
+  <div class="container">
+    
+    <!-- STEP 1: Gift Box Opening -->
+    <div id="step1" class="step active">
+      <div class="icon-gift" onclick="openGift()">🎁</div>
+      <h1>Tap to Open</h1>
+      <p class="subtitle">A surprise is waiting inside for you...</p>
+    </div>
+
+    <!-- STEP 2: Name Input -->
+    <div id="step2" class="step">
+      <div style="font-size: 50px; margin-bottom: 10px;">📜</div>
+      <h1>Enter Your Name</h1>
+      <p class="subtitle">Please tell me who this special surprise is for!</p>
+      <input type="text" id="userNameInput" class="input-box" placeholder="Your Name Here..." autocomplete="off">
+      <br>
+      <button class="btn" onclick="submitName()">Submit ➔</button>
+    </div>
+
+    <!-- STEP 3: Animated Cake Screen -->
+    <div id="step3" class="step">
+      <h1>Wait, I had a surprise for you!</h1>
+      <h2 id="greetingName" style="color: #ff80ab; margin-top: 5px;">Happy Birthday!</h2>
+      <div class="cake-container">
+        <div class="flame"></div>
+        <div class="candle"></div>
+        <div class="cake-top"></div>
+        <div class="cake-base"></div>
+      </div>
+      <p class="subtitle" style="color: #ff80ab; font-weight: 500; margin-top: 10px;">
+        "This time I made with online by hope next time celebrate greatly"
+      </p>
+      <button class="btn" onclick="startCelebration()">Celebrate! 🎉</button>
+    </div>
+
+    <!-- STEP 4: Main Birthday Wish Message -->
+    <div id="step4" class="step">
+      <div style="font-size: 50px; margin-bottom: 10px;">🥳</div>
+      <h1>Happy Birthday!</h1>
+      <div class="wish-text">
+        <p>Happy birthday unexpected person.</p>
+        <br>
+        <p>Thankyou for coming into my life. I don't know how we get closer in few days. I hope by the god grace we stand like this without any misunderstandings.</p>
+        <br>
+        <p>May this year bring you endless happiness, great strength, and success in everything you pursue. Wishing you a peaceful and wonderful year ahead!</p>
+      </div>
+      <button class="btn" onclick="goToStep5()">Next ➔</button>
+    </div>
+
+    <!-- STEP 5: Next Message & Stars/Balloons Showcase -->
+    <div id="step5" class="step">
+      <div style="font-size: 50px; margin-bottom: 10px;">✨</div>
+      <h1>Thank you for coming into my life!</h1>
+      <p class="subtitle">There is still one tiny thing left...</p>
+      
+      <div class="heart-title">Click Here</div>
+      <div class="heart-symbol" onclick="showLoveWish()">❤️</div>
+    </div>
+
+    <!-- STEP 6: Happy Wish Message -->
+    <div id="step6" class="step">
+      <div style="font-size: 50px; margin-bottom: 10px;">💫</div>
+      <h1>Hope this wish make you feel happy</h1>
+      <p class="subtitle" style="font-size: 1.2rem; color: #ff80ab; margin-top: 15px;">Thankyou 💫</p>
+      <button class="btn" style="background: linear-gradient(45deg, #e91e63, #ff5722);" onclick="goToEnd()">End 🛑</button>
+    </div>
+
+    <!-- STEP 7: Rose Final Screen -->
+    <div id="step7" class="step">
+      <div class="rose-icon">🌹</div>
+      <h1>Happy Birthday!</h1>
+      <p class="subtitle" style="font-size: 1.3rem; color: #ff80ab; margin-top: 15px;">Thankyou 💫</p>
+    </div>
+
+  </div>
+
+  <script>
+    // 1. Generate Background Stars and Balloons
+    const bgContainer = document.getElementById('bgDecorations');
+    
+    // Create Stars
+    for (let i = 0; i < 40; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      const size = Math.random() * 3 + 1;
+      star.style.width = `${size}px`;
+      star.style.height = `${size}px`;
+      star.style.setProperty('--duration', `${Math.random() * 3 + 2}s`);
+      bgContainer.appendChild(star);
+    }
+
+    // Create Floating Balloons
+    const colors = ['#ff4081', '#7c4dff', '#00e676', '#ffea00', '#00b0ff'];
+    for (let i = 0; i < 12; i++) {
+      const balloon = document.createElement('div');
+      balloon.className = 'balloon';
+      balloon.style.left = `${Math.random() * 90 + 5}%`;
+      balloon.style.setProperty('--color', colors[Math.floor(Math.random() * colors.length)]);
+      balloon.style.setProperty('--speed', `${Math.random() * 8 + 7}s`);
+      balloon.style.animationDelay = `${Math.random() * 5}s`;
+      bgContainer.appendChild(balloon);
+    }
+
+    // 2. Fireworks / Confetti Particle System
+    const canvas = document.getElementById('effectCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = Math.random() * 7 + 3;
+        this.speedX = (Math.random() - 0.5) * 10;
+        this.speedY = (Math.random() - 0.5) * 10 - 2;
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+        this.gravity = 0.12;
+        this.opacity = 1;
+        this.decay = Math.random() * 0.015 + 0.005;
+      }
+
+      update() {
+        this.speedY += this.gravity;
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.opacity -= this.decay;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function triggerFireworks() {
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      for (let i = 0; i < 120; i++) {
+        particles.push(new Particle(centerX, centerY));
+      }
+      setTimeout(() => {
+        for (let i = 0; i < 80; i++) {
+          particles.push(new Particle(window.innerWidth * 0.2, window.innerHeight * 0.3));
+        }
+      }, 200);
+      setTimeout(() => {
+        for (let i = 0; i < 80; i++) {
+          particles.push(new Particle(window.innerWidth * 0.8, window.innerHeight * 0.3));
+        }
+      }, 400);
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        particles[i].draw();
+        if (particles[i].opacity <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // 3. Step Transitions
+    function switchStep(fromId, toId) {
+      document.getElementById(fromId).classList.remove('active');
+      document.getElementById(toId).classList.add('active');
+    }
+
+    function openGift() {
+      switchStep('step1', 'step2');
+    }
+
+    function submitName() {
+      const nameInput = document.getElementById('userNameInput').value.trim();
+      if (nameInput) {
+        document.getElementById('greetingName').innerText = `Happy Birthday, ${nameInput}! 🎉`;
+      }
+      switchStep('step2', 'step3');
+    }
+
+    function startCelebration() {
+      triggerFireworks();
+      switchStep('step3', 'step4');
+    }
+
+    function goToStep5() {
+      switchStep('step4', 'step5');
+    }
+
+    function showLoveWish() {
+      triggerFireworks();
+      switchStep('step5', 'step6');
+    }
+
+    function goToEnd() {
+      switchStep('step6', 'step7');
+    }
+  </script>
+</body>
+</html>
